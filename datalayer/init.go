@@ -31,7 +31,8 @@ func Init() error {
 	}
 	var bases []string
 	conn.Raw(fmt.Sprintf("SELECT \"datname\" FROM pg_database WHERE datname = '%s'", dbName)).Scan(&bases)
-	if len(bases) == 0 {
+	newDB := len(bases) == 0
+	if newDB {
 		_ = conn.Exec("CREATE DATABASE " + dbName)
 	}
 
@@ -58,6 +59,43 @@ func Init() error {
 	}
 	db = conn
 	err = db.AutoMigrate(modelsForMigration...)
+	if err != nil {
+		return err
+	}
+	if newDB {
+		err = fillExamples(conn)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func fillExamples(conn *gorm.DB) error {
+	authors := models.GetDefaultAuthors()
+	err := conn.Create(&authors).Error
+	if err != nil {
+		return err
+	}
+
+	publishers := models.GetDefaultPublishers()
+	err = conn.Create(&publishers).Error
+	if err != nil {
+		return err
+	}
+
+	users := models.GetDefaultUsers()
+	err = conn.Create(&users).Error
+	if err != nil {
+		return err
+	}
+
+	books := models.GetDefaultBooks()
+
+	books[0].Authors = append(books[0].Authors, authors[0], authors[1])
+	books[0].PublisherId = publishers[0].Id
+
+	err = conn.Create(&books).Error
 	if err != nil {
 		return err
 	}

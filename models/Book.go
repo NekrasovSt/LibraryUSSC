@@ -20,6 +20,6 @@ var defaultBooks = []Book{
 	},
 }
 
-func GetBooks() []Book {
+func GetDefaultBooks() []Book {
 	return defaultBooks
 }

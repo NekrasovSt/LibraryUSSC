@@ -7,7 +7,7 @@ type Publisher struct {
 	Books []Book `gorm:"foreignKey:PublisherId"`
 }
 
-func GetPublishers() []Publisher {
+func GetDefaultPublishers() []Publisher {
 	return []Publisher{
 		{
 			Name:  "Питер",

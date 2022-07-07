@@ -11,7 +11,7 @@ import (
 )
 
 func getBooksHandler(w http.ResponseWriter, r *http.Request) {
-	renderJSON(w, models.GetBooks())
+	renderJSON(w, models.GetDefaultBooks())
 }
 func getBookItemsHandler(w http.ResponseWriter, r *http.Request) {
 	renderJSON(w, models.GetBookItems())
@@ -26,7 +26,7 @@ func renderJSON(w http.ResponseWriter, data interface{}) {
 	w.Write(js)
 }
 func getBookHandler(w http.ResponseWriter, r *http.Request) {
-	renderJSON(w, models.GetBooks()[0])
+	renderJSON(w, models.GetDefaultBooks()[0])
 }
 func main() {
 	router := mux.NewRouter()

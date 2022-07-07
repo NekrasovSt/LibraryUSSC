@@ -6,3 +6,11 @@ type User struct {
 	SecondName string     `json:"secondName"`
 	BookItems  []BookItem `gorm:"foreignKey:UserId"`
 }
+
+func GetDefaultUsers() []User {
+	return []User{
+		{FirstName: "Иван", SecondName: "Иванов"},
+		{FirstName: "Петр", SecondName: "Петров"},
+		{FirstName: "Василий", SecondName: "Васильев"},
+	}
+}
