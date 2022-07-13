@@ -6,7 +6,10 @@ import (
 	"github.com/joho/godotenv"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
+	"log"
 	"os"
+	"time"
 )
 
 var db *gorm.DB
@@ -15,6 +18,15 @@ func GetDB() *gorm.DB {
 	return db
 }
 func Init() error {
+	newLogger := logger.New(
+		log.New(os.Stdout, "\r\n", log.LstdFlags), // io writer
+		logger.Config{
+			SlowThreshold:             time.Second, // Slow SQL threshold
+			LogLevel:                  logger.Info, // Log level
+			IgnoreRecordNotFoundError: true,        // Ignore ErrRecordNotFound error for logger
+			Colorful:                  false,       // Disable color
+		},
+	)
 	e := godotenv.Load() //Загрузить файл .env
 	if e != nil {
 		return e
@@ -25,7 +37,7 @@ func Init() error {
 	dbHost := os.Getenv("db_host")
 
 	dbUri := fmt.Sprintf("host=%s user=%s dbname=%s sslmode=disable password=%s", dbHost, username, "postgres", password)
-	conn, err := gorm.Open(postgres.Open(dbUri), &gorm.Config{})
+	conn, err := gorm.Open(postgres.Open(dbUri), &gorm.Config{Logger: newLogger})
 	if err != nil {
 		return err
 	}
@@ -37,7 +49,7 @@ func Init() error {
 	}
 
 	dbUri = fmt.Sprintf("host=%s user=%s dbname=%s sslmode=disable password=%s", dbHost, username, dbName, password)
-	conn, err = gorm.Open(postgres.Open(dbUri), &gorm.Config{DisableForeignKeyConstraintWhenMigrating: true})
+	conn, err = gorm.Open(postgres.Open(dbUri), &gorm.Config{DisableForeignKeyConstraintWhenMigrating: true, Logger: newLogger})
 	if err != nil {
 		return err
 	}
@@ -53,7 +65,7 @@ func Init() error {
 	if err != nil {
 		return err
 	}
-	conn, err = gorm.Open(postgres.Open(dbUri), &gorm.Config{DisableForeignKeyConstraintWhenMigrating: false})
+	conn, err = gorm.Open(postgres.Open(dbUri), &gorm.Config{DisableForeignKeyConstraintWhenMigrating: false, Logger: newLogger})
 	if err != nil {
 		return err
 	}
@@ -95,6 +107,7 @@ func fillExamples(conn *gorm.DB) error {
 	books[0].Authors = append(books[0].Authors, authors[0], authors[1])
 	books[0].PublisherId = publishers[0].Id
 
+	books[0].Books = models.GetBookItems()
 	err = conn.Create(&books).Error
 	if err != nil {
 		return err

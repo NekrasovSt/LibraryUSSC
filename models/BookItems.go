@@ -12,5 +12,7 @@ type BookItem struct {
 func GetBookItems() []BookItem {
 	return []BookItem{
 		BookItem{Id: 0, ISBN: "978-5-4461-1155-8", Receipt: time.Date(2021, 1, 1, 9, 0, 0, 0, time.UTC)},
+		BookItem{Id: 0, ISBN: "978-5-4461-1155-8", Receipt: time.Date(2021, 1, 1, 9, 2, 0, 0, time.UTC)},
+		BookItem{Id: 0, ISBN: "978-5-4461-1155-8", Receipt: time.Date(2021, 1, 1, 9, 3, 0, 0, time.UTC)},
 	}
 }
