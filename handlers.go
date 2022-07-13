@@ -52,16 +52,19 @@ func renderJSON(w http.ResponseWriter, data interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(js)
 }
+func handleError(err error, w http.ResponseWriter) {
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		http.Error(w, err.Error(), http.StatusNotFound)
+	} else {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
 func getBookHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["id"]
 	book, err := datalayer.GetBook(id)
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			http.Error(w, err.Error(), http.StatusNotFound)
-		} else {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
+		handleError(err, w)
 		return
 	}
 	renderJSON(w, book)
@@ -78,11 +81,7 @@ func getAuthorHandler(w http.ResponseWriter, r *http.Request) {
 	id, _ := strconv.Atoi(idParam)
 	book, err := datalayer.GetAuthor(id)
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			http.Error(w, err.Error(), http.StatusNotFound)
-		} else {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
+		handleError(err, w)
 		return
 	}
 	renderJSON(w, book)
@@ -97,11 +96,7 @@ func giveOutBookHandler(w http.ResponseWriter, r *http.Request) {
 	isbn := vars["id"]
 	_, err := datalayer.GetBook(isbn)
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			http.Error(w, err.Error(), http.StatusNotFound)
-		} else {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
+		handleError(err, w)
 		return
 	}
 	account := new(ItemDto)
@@ -110,13 +105,10 @@ func giveOutBookHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	id, err2 := datalayer.GiveOutBook(isbn, account.Id)
-	if err2 != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			http.Error(w, err2.Error(), http.StatusNotFound)
-		} else {
-			http.Error(w, err2.Error(), http.StatusInternalServerError)
-		}
+	var id int
+	id, err = datalayer.GiveOutBook(isbn, account.Id)
+	if err != nil {
+		handleError(err, w)
 		return
 	}
 	renderJSON(w, id)
@@ -130,11 +122,7 @@ func returnBookHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	err = datalayer.ReturnBook(bookItem.Id)
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			http.Error(w, err.Error(), http.StatusNotFound)
-		} else {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
+		handleError(err, w)
 		return
 	}
 }
