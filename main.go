@@ -12,6 +12,8 @@ func main() {
 	router := mux.NewRouter()
 	router.HandleFunc("/api/book/{id}", getBookHandler)
 	router.HandleFunc("/api/book/{id}/items", getBookItemsHandler)
+	router.HandleFunc("/api/book/{id}/giveOut", giveOutBookHandler).Methods("POST")
+	router.HandleFunc("/api/returnBook", returnBookHandler).Methods("POST")
 	router.HandleFunc("/api/book", getBooksHandler)
 	router.HandleFunc("/api/author", getAuthorsHandler)
 	router.HandleFunc("/api/author/{id:[0-9]+}", getAuthorHandler)

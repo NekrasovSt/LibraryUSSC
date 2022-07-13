@@ -87,3 +87,54 @@ func getAuthorHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	renderJSON(w, book)
 }
+
+type ItemDto struct {
+	Id int `json:"id"`
+}
+
+func giveOutBookHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	isbn := vars["id"]
+	_, err := datalayer.GetBook(isbn)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			http.Error(w, err.Error(), http.StatusNotFound)
+		} else {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+		return
+	}
+	account := new(ItemDto)
+	err = json.NewDecoder(r.Body).Decode(&account)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	id, err2 := datalayer.GiveOutBook(isbn, account.Id)
+	if err2 != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			http.Error(w, err2.Error(), http.StatusNotFound)
+		} else {
+			http.Error(w, err2.Error(), http.StatusInternalServerError)
+		}
+		return
+	}
+	renderJSON(w, id)
+}
+func returnBookHandler(w http.ResponseWriter, r *http.Request) {
+	bookItem := new(ItemDto)
+	err := json.NewDecoder(r.Body).Decode(&bookItem)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	err = datalayer.ReturnBook(bookItem.Id)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			http.Error(w, err.Error(), http.StatusNotFound)
+		} else {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+		return
+	}
+}

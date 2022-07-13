@@ -30,6 +30,25 @@ func GetBook(isbn string) (models.Book, error) {
 	}
 	return book, nil
 }
+func ReturnBook(bookId int) error {
+	var bookItem models.BookItem
+	err := db.Where("id = ? and user_id is not null", bookId).First(&bookItem).Error
+	if err != nil {
+		return err
+	}
+	bookItem.UserId = nil
+	return db.Save(bookItem).Error
+}
+func GiveOutBook(isbn string, userId int) (int, error) {
+	var bookItem models.BookItem
+	err := db.Where("isbn = ? and user_id is null", isbn).First(&bookItem).Error
+	if err != nil {
+		return 0, err
+	}
+	bookItem.UserId = &userId
+	return bookItem.Id, db.Save(&bookItem).Error
+}
+
 func GetAuthor(id int) (models.Author, error) {
 	var author models.Author
 	result := db.First(&author, id)
