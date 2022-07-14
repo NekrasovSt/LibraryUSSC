@@ -11,7 +11,7 @@ import (
 	"strconv"
 )
 
-func getBooksHandler(w http.ResponseWriter, r *http.Request) {
+func (app *application) getBooksHandler(w http.ResponseWriter, r *http.Request) {
 	limit, skip := extractPaging(r)
 
 	var books = datalayer.GetBooks(limit, skip)
@@ -39,12 +39,12 @@ func extractPaging(r *http.Request) (*int, *int) {
 	}
 	return limit, skip
 }
-func getBookItemsHandler(w http.ResponseWriter, r *http.Request) {
+func (app *application) getBookItemsHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["id"]
 	items, err := datalayer.GetBookItems(id)
 	if err != nil {
-		handleError(err, w)
+		app.handleError(err, w)
 		return
 	}
 	renderJSON(w, items)
@@ -59,40 +59,41 @@ func renderJSON(w http.ResponseWriter, data interface{}) {
 	_, err = w.Write(js)
 	fmt.Println(err)
 }
-func handleError(err error, w http.ResponseWriter) {
+func (app *application) handleError(err error, w http.ResponseWriter) {
+	app.errorLog.Print(err)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		http.Error(w, err.Error(), http.StatusNotFound)
 	} else {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
-func getBookHandler(w http.ResponseWriter, r *http.Request) {
+func (app *application) getBookHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["id"]
 	book, err := datalayer.GetBook(id)
 	if err != nil {
-		handleError(err, w)
+		app.handleError(err, w)
 		return
 	}
 	renderJSON(w, book)
 }
-func getAuthorsHandler(w http.ResponseWriter, r *http.Request) {
+func (app *application) getAuthorsHandler(w http.ResponseWriter, r *http.Request) {
 	limit, skip := extractPaging(r)
 
 	books, err := datalayer.GetAuthors(limit, skip)
 	if err != nil {
-		handleError(err, w)
+		app.handleError(err, w)
 		return
 	}
 	renderJSON(w, books)
 }
-func getAuthorHandler(w http.ResponseWriter, r *http.Request) {
+func (app *application) getAuthorHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	idParam := vars["id"]
 	id, _ := strconv.Atoi(idParam)
 	book, err := datalayer.GetAuthor(id)
 	if err != nil {
-		handleError(err, w)
+		app.handleError(err, w)
 		return
 	}
 	renderJSON(w, book)
@@ -102,12 +103,12 @@ type ItemDto struct {
 	Id int `json:"id"`
 }
 
-func giveOutBookHandler(w http.ResponseWriter, r *http.Request) {
+func (app *application) giveOutBookHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	isbn := vars["id"]
 	_, err := datalayer.GetBook(isbn)
 	if err != nil {
-		handleError(err, w)
+		app.handleError(err, w)
 		return
 	}
 	account := new(ItemDto)
@@ -119,12 +120,12 @@ func giveOutBookHandler(w http.ResponseWriter, r *http.Request) {
 	var id int
 	id, err = datalayer.GiveOutBook(isbn, account.Id)
 	if err != nil {
-		handleError(err, w)
+		app.handleError(err, w)
 		return
 	}
 	renderJSON(w, id)
 }
-func returnBookHandler(w http.ResponseWriter, r *http.Request) {
+func (app *application) returnBookHandler(w http.ResponseWriter, r *http.Request) {
 	bookItem := new(ItemDto)
 	err := json.NewDecoder(r.Body).Decode(&bookItem)
 	if err != nil {
@@ -133,7 +134,7 @@ func returnBookHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	err = datalayer.ReturnBook(bookItem.Id)
 	if err != nil {
-		handleError(err, w)
+		app.handleError(err, w)
 		return
 	}
 }
