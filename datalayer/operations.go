@@ -12,15 +12,16 @@ func GetBooks(limit, skip *int) []models.Book {
 	}
 	return books
 }
-func GetAuthors(limit, skip *int) []models.Author {
+func GetAuthors(limit, skip *int) ([]models.Author, error) {
 	var authors []models.Author
 	conn := GetDB()
+	var err error
 	if limit != nil && skip != nil {
-		conn.Limit(*limit).Offset(*skip).Find(&authors)
+		err = conn.Limit(*limit).Offset(*skip).Find(&authors).Error
 	} else {
-		conn.Find(&authors)
+		err = conn.Find(&authors).Error
 	}
-	return authors
+	return authors, err
 }
 func GetBook(isbn string) (models.Book, error) {
 	var book models.Book
@@ -57,8 +58,8 @@ func GetAuthor(id int) (models.Author, error) {
 	}
 	return author, nil
 }
-func GetBookItems(isbn string) []models.BookItem {
+func GetBookItems(isbn string) ([]models.BookItem, error) {
 	var bookItems []models.BookItem
-	db.Where("isbn = ?", isbn).Find(&bookItems)
-	return bookItems
+	err := db.Where("isbn = ?", isbn).Find(&bookItems).Error
+	return bookItems, err
 }

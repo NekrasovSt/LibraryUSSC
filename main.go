@@ -26,5 +26,9 @@ func main() {
 		os.Exit(1)
 	}
 	fmt.Println("Server is listening...")
-	http.ListenAndServe("localhost:8181", nil)
+	err = http.ListenAndServe("localhost:8181", nil)
+	if err != nil {
+		fmt.Print(err)
+		os.Exit(1)
+	}
 }

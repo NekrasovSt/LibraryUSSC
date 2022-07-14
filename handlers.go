@@ -4,6 +4,7 @@ import (
 	"BookBase/datalayer"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/gorilla/mux"
 	"gorm.io/gorm"
 	"net/http"
@@ -41,7 +42,12 @@ func extractPaging(r *http.Request) (*int, *int) {
 func getBookItemsHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["id"]
-	renderJSON(w, datalayer.GetBookItems(id))
+	items, err := datalayer.GetBookItems(id)
+	if err != nil {
+		handleError(err, w)
+		return
+	}
+	renderJSON(w, items)
 }
 func renderJSON(w http.ResponseWriter, data interface{}) {
 	js, err := json.Marshal(data)
@@ -50,7 +56,8 @@ func renderJSON(w http.ResponseWriter, data interface{}) {
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
-	w.Write(js)
+	_, err = w.Write(js)
+	fmt.Println(err)
 }
 func handleError(err error, w http.ResponseWriter) {
 	if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -72,7 +79,11 @@ func getBookHandler(w http.ResponseWriter, r *http.Request) {
 func getAuthorsHandler(w http.ResponseWriter, r *http.Request) {
 	limit, skip := extractPaging(r)
 
-	var books = datalayer.GetAuthors(limit, skip)
+	books, err := datalayer.GetAuthors(limit, skip)
+	if err != nil {
+		handleError(err, w)
+		return
+	}
 	renderJSON(w, books)
 }
 func getAuthorHandler(w http.ResponseWriter, r *http.Request) {
