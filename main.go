@@ -32,10 +32,14 @@ func main() {
 
 	http.Handle("/", router)
 
-	err := datalayer.Init(app.infoLog)
+	config, err := datalayer.ParseConfig()
 	if err != nil {
 		app.errorLog.Fatal(err)
 	}
-	app.infoLog.Printf("Server is listening...")
-	app.errorLog.Fatal(http.ListenAndServe("localhost:8181", nil))
+	err = datalayer.Init(config, app.infoLog)
+	if err != nil {
+		app.errorLog.Fatal(err)
+	}
+	app.infoLog.Printf("Server is listening...%s", config.Endpoint)
+	app.errorLog.Fatal(http.ListenAndServe(config.Endpoint, nil))
 }

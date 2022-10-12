@@ -17,7 +17,30 @@ var db *gorm.DB
 func GetDB() *gorm.DB {
 	return db
 }
-func Init(log *log.Logger) error {
+
+type AppConfig struct {
+	DbName   string
+	Password string
+	UserName string
+	DbHost   string
+	Endpoint string
+}
+
+func ParseConfig() (*AppConfig, error) {
+	e := godotenv.Load() //Загрузить файл .env
+	if e != nil {
+		return nil, e
+	}
+	config := new(AppConfig)
+	config.UserName = os.Getenv("db_user")
+	config.Password = os.Getenv("db_pass")
+	config.DbName = os.Getenv("db_name")
+	config.DbHost = os.Getenv("db_host")
+	config.Endpoint = os.Getenv("endpoint")
+	return config, nil
+}
+
+func Init(config *AppConfig, log *log.Logger) error {
 	newLogger := logger.New(
 		log,
 		logger.Config{
@@ -27,28 +50,20 @@ func Init(log *log.Logger) error {
 			Colorful:                  false,         // Disable color
 		},
 	)
-	e := godotenv.Load() //Загрузить файл .env
-	if e != nil {
-		return e
-	}
-	username := os.Getenv("db_user")
-	password := os.Getenv("db_pass")
-	dbName := os.Getenv("db_name")
-	dbHost := os.Getenv("db_host")
 
-	dbUri := fmt.Sprintf("host=%s user=%s dbname=%s sslmode=disable password=%s", dbHost, username, "postgres", password)
+	dbUri := fmt.Sprintf("host=%s user=%s dbname=%s sslmode=disable password=%s", config.DbHost, config.UserName, "postgres", config.Password)
 	conn, err := gorm.Open(postgres.Open(dbUri), &gorm.Config{Logger: newLogger})
 	if err != nil {
 		return err
 	}
 	var bases []string
-	conn.Raw(fmt.Sprintf("SELECT \"datname\" FROM pg_database WHERE datname = '%s'", dbName)).Scan(&bases)
+	conn.Raw(fmt.Sprintf("SELECT \"datname\" FROM pg_database WHERE datname = '%s'", config.DbName)).Scan(&bases)
 	newDB := len(bases) == 0
 	if newDB {
-		_ = conn.Exec("CREATE DATABASE " + dbName)
+		_ = conn.Exec("CREATE DATABASE " + config.DbName)
 	}
 
-	dbUri = fmt.Sprintf("host=%s user=%s dbname=%s sslmode=disable password=%s", dbHost, username, dbName, password)
+	dbUri = fmt.Sprintf("host=%s user=%s dbname=%s sslmode=disable password=%s", config.DbHost, config.UserName, config.DbName, config.Password)
 	conn, err = gorm.Open(postgres.Open(dbUri), &gorm.Config{DisableForeignKeyConstraintWhenMigrating: true, Logger: newLogger})
 	if err != nil {
 		return err
