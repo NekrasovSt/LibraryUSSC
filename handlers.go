@@ -4,7 +4,6 @@ import (
 	"BookBase/datalayer"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"github.com/gorilla/mux"
 	"gorm.io/gorm"
 	"net/http"
@@ -57,7 +56,9 @@ func renderJSON(w http.ResponseWriter, data interface{}) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	_, err = w.Write(js)
-	fmt.Println(err)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }
 func (app *application) handleError(err error, w http.ResponseWriter) {
 	app.errorLog.Print(err)
