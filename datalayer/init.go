@@ -37,7 +37,7 @@ func ParseConfig() (*AppConfig, error) {
 	config.Password = os.Getenv("db_pass")
 	config.DbName = os.Getenv("db_name")
 	config.DbHost = os.Getenv("db_host")
-	config.DbHost = os.Getenv("db_port")
+	config.DbPort = os.Getenv("db_port")
 	config.Endpoint = os.Getenv("endpoint")
 	return config, nil
 }
