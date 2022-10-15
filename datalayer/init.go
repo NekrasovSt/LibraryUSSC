@@ -20,6 +20,7 @@ func GetDB() *gorm.DB {
 
 type AppConfig struct {
 	DbName   string
+	DbPort   string
 	Password string
 	UserName string
 	DbHost   string
@@ -36,6 +37,7 @@ func ParseConfig() (*AppConfig, error) {
 	config.Password = os.Getenv("db_pass")
 	config.DbName = os.Getenv("db_name")
 	config.DbHost = os.Getenv("db_host")
+	config.DbHost = os.Getenv("db_port")
 	config.Endpoint = os.Getenv("endpoint")
 	return config, nil
 }
@@ -51,7 +53,7 @@ func Init(config *AppConfig, log *log.Logger) error {
 		},
 	)
 
-	dbUri := fmt.Sprintf("host=%s user=%s dbname=%s sslmode=disable password=%s", config.DbHost, config.UserName, "postgres", config.Password)
+	dbUri := fmt.Sprintf("host=%s user=%s dbname=%s sslmode=disable password=%s port=%s", config.DbHost, config.UserName, "postgres", config.Password, config.DbPort)
 	conn, err := gorm.Open(postgres.Open(dbUri), &gorm.Config{Logger: newLogger})
 	if err != nil {
 		return err
@@ -63,7 +65,7 @@ func Init(config *AppConfig, log *log.Logger) error {
 		_ = conn.Exec("CREATE DATABASE " + config.DbName)
 	}
 
-	dbUri = fmt.Sprintf("host=%s user=%s dbname=%s sslmode=disable password=%s", config.DbHost, config.UserName, config.DbName, config.Password)
+	dbUri = fmt.Sprintf("host=%s user=%s dbname=%s sslmode=disable password=%s port=%s", config.DbHost, config.UserName, config.DbName, config.Password, config.DbPort)
 	conn, err = gorm.Open(postgres.Open(dbUri), &gorm.Config{DisableForeignKeyConstraintWhenMigrating: true, Logger: newLogger})
 	if err != nil {
 		return err
