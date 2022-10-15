@@ -82,7 +82,8 @@ func Init(config *AppConfig, log *log.Logger) error {
 	if err != nil {
 		return err
 	}
-	conn, err = gorm.Open(postgres.Open(dbUri), &gorm.Config{DisableForeignKeyConstraintWhenMigrating: false, Logger: newLogger})
+	dialector := &postgres.Dialector{Config: &postgres.Config{DSN: dbUri, PreferSimpleProtocol: true}}
+	conn, err = gorm.Open(dialector, &gorm.Config{DisableForeignKeyConstraintWhenMigrating: false, Logger: newLogger})
 	if err != nil {
 		return err
 	}
