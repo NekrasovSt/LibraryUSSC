@@ -29,12 +29,11 @@ type AppConfig struct {
 }
 
 func ParseConfig() (*AppConfig, error) {
-	dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
+	mydir, err := os.Getwd()
 	if err != nil {
 		log.Fatal(err)
 	}
-	environmentPath := filepath.Join(dir, ".env")
-	e := godotenv.Load(environmentPath) //Загрузить файл .env
+	e := godotenv.Load(filepath.Join(mydir, ".env")) //Загрузить файл .env
 	if e != nil {
 		return nil, e
 	}
@@ -60,19 +59,25 @@ func Init(config *AppConfig, log *log.Logger) error {
 	)
 
 	dbUri := fmt.Sprintf("host=%s user=%s dbname=%s sslmode=disable password=%s port=%s", config.DbHost, config.UserName, "postgres", config.Password, config.DbPort)
-	conn, err := gorm.Open(postgres.Open(dbUri), &gorm.Config{Logger: newLogger})
+	dialector := &postgres.Dialector{Config: &postgres.Config{DSN: dbUri, PreferSimpleProtocol: true}}
+	conn, err := gorm.Open(dialector, &gorm.Config{Logger: newLogger})
 	if err != nil {
 		return err
 	}
 	var bases []string
-	conn.Raw(fmt.Sprintf("SELECT \"datname\" FROM pg_database WHERE datname = '%s'", config.DbName)).Scan(&bases)
+	sql := fmt.Sprintf("SELECT \"datname\" FROM pg_database WHERE datname = '%s';", config.DbName)
+	err = conn.Raw(sql).Scan(&bases).Error
+	if err != nil {
+		return err
+	}
 	newDB := len(bases) == 0
 	if newDB {
 		_ = conn.Exec("CREATE DATABASE " + config.DbName)
 	}
 
 	dbUri = fmt.Sprintf("host=%s user=%s dbname=%s sslmode=disable password=%s port=%s", config.DbHost, config.UserName, config.DbName, config.Password, config.DbPort)
-	conn, err = gorm.Open(postgres.Open(dbUri), &gorm.Config{DisableForeignKeyConstraintWhenMigrating: true, Logger: newLogger})
+	dialector = &postgres.Dialector{Config: &postgres.Config{DSN: dbUri, PreferSimpleProtocol: true}}
+	conn, err = gorm.Open(dialector, &gorm.Config{DisableForeignKeyConstraintWhenMigrating: true, Logger: newLogger})
 	if err != nil {
 		return err
 	}
@@ -88,7 +93,7 @@ func Init(config *AppConfig, log *log.Logger) error {
 	if err != nil {
 		return err
 	}
-	dialector := &postgres.Dialector{Config: &postgres.Config{DSN: dbUri, PreferSimpleProtocol: true}}
+	dialector = &postgres.Dialector{Config: &postgres.Config{DSN: dbUri, PreferSimpleProtocol: true}}
 	conn, err = gorm.Open(dialector, &gorm.Config{DisableForeignKeyConstraintWhenMigrating: false, Logger: newLogger})
 	if err != nil {
 		return err
