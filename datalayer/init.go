@@ -9,6 +9,7 @@ import (
 	"gorm.io/gorm/logger"
 	"log"
 	"os"
+	"path/filepath"
 	"time"
 )
 
@@ -28,7 +29,12 @@ type AppConfig struct {
 }
 
 func ParseConfig() (*AppConfig, error) {
-	e := godotenv.Load() //Загрузить файл .env
+	dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
+	if err != nil {
+		log.Fatal(err)
+	}
+	environmentPath := filepath.Join(dir, ".env")
+	e := godotenv.Load(environmentPath) //Загрузить файл .env
 	if e != nil {
 		return nil, e
 	}
