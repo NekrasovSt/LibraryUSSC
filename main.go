@@ -29,6 +29,9 @@ func main() {
 	router.HandleFunc("/api/book", app.getBooksHandler)
 	router.HandleFunc("/api/author", app.getAuthorsHandler)
 	router.HandleFunc("/api/author/{id:[0-9]+}", app.getAuthorHandler)
+	router.HandleFunc("/api/user", app.getUsersHandler).Methods("GET")
+	router.HandleFunc("/api/user", app.createUserHandler).Methods("POST")
+	router.HandleFunc("/api/bookItem", app.addBookItemsHandler).Methods("POST")
 
 	http.Handle("/", router)
 

@@ -1,6 +1,9 @@
 package datalayer
 
-import "BookBase/models"
+import (
+	"BookBase/models"
+	"time"
+)
 
 func GetBooks(limit, skip *int) []models.Book {
 	var books []models.Book
@@ -11,6 +14,17 @@ func GetBooks(limit, skip *int) []models.Book {
 		conn.Find(&books)
 	}
 	return books
+}
+func GetUsers(limit, skip *int) ([]models.User, error) {
+	var users []models.User
+	conn := GetDB()
+	var err error
+	if limit != nil && skip != nil {
+		err = conn.Limit(*limit).Offset(*skip).Find(&users).Error
+	} else {
+		err = conn.Find(&users).Error
+	}
+	return users, err
 }
 func GetAuthors(limit, skip *int) ([]models.Author, error) {
 	var authors []models.Author
@@ -40,6 +54,22 @@ func ReturnBook(bookId int) error {
 	bookItem.UserId = nil
 	return db.Save(bookItem).Error
 }
+func AddBookItems(isbn string, count int) ([]models.BookItem, error) {
+	var book models.Book
+	result := db.First(&book, "isbn = ?", isbn)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	bookItems := []models.BookItem{}
+	for i := 0; i < count; i++ {
+		bookItems = append(bookItems, models.BookItem{ISBN: isbn, Receipt: time.Now().UTC()})
+	}
+	err := db.Create(&bookItems).Error
+	if err != nil {
+		return nil, result.Error
+	}
+	return bookItems, nil
+}
 func GiveOutBook(isbn string, userId int) (int, error) {
 	var bookItem models.BookItem
 	err := db.Where("isbn = ? and user_id is null", isbn).First(&bookItem).Error
@@ -48,6 +78,13 @@ func GiveOutBook(isbn string, userId int) (int, error) {
 	}
 	bookItem.UserId = &userId
 	return bookItem.Id, db.Save(&bookItem).Error
+}
+func CreateUser(user *models.User) error {
+	result := db.Create(&user)
+	if result.Error != nil {
+		return result.Error
+	}
+	return nil
 }
 
 func GetAuthor(id int) (models.Author, error) {

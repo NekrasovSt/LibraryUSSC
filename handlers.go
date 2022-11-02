@@ -2,6 +2,7 @@ package main
 
 import (
 	"BookBase/datalayer"
+	"BookBase/models"
 	"encoding/json"
 	"errors"
 	"github.com/gorilla/mux"
@@ -88,6 +89,16 @@ func (app *application) getAuthorsHandler(w http.ResponseWriter, r *http.Request
 	}
 	renderJSON(w, books)
 }
+func (app *application) getUsersHandler(w http.ResponseWriter, r *http.Request) {
+	limit, skip := extractPaging(r)
+
+	users, err := datalayer.GetUsers(skip, limit)
+	if err != nil {
+		app.handleError(err, w)
+		return
+	}
+	renderJSON(w, users)
+}
 func (app *application) getAuthorHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	idParam := vars["id"]
@@ -99,9 +110,44 @@ func (app *application) getAuthorHandler(w http.ResponseWriter, r *http.Request)
 	}
 	renderJSON(w, book)
 }
+func (app *application) createUserHandler(w http.ResponseWriter, r *http.Request) {
+	user := new(models.User)
+	err := json.NewDecoder(r.Body).Decode(&user)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	var id int
+	err = datalayer.CreateUser(user)
+	if err != nil {
+		app.handleError(err, w)
+		return
+	}
+	renderJSON(w, id)
+}
+
+type AddingBookItemDto struct {
+	Isbn  string `json:"isbn"`
+	Count int    `json:"count"`
+}
+
+func (app *application) addBookItemsHandler(w http.ResponseWriter, r *http.Request) {
+	adding := new(AddingBookItemDto)
+	err := json.NewDecoder(r.Body).Decode(&adding)
+	if err != nil {
+		app.handleError(err, w)
+		return
+	}
+	bookItems, err := datalayer.AddBookItems(adding.Isbn, adding.Count)
+	if err != nil {
+		app.handleError(err, w)
+		return
+	}
+	renderJSON(w, bookItems)
+}
 
 type ItemDto struct {
-	Id int `json:"id"`
+	UserId int `json:"userId"`
 }
 
 func (app *application) giveOutBookHandler(w http.ResponseWriter, r *http.Request) {
@@ -119,21 +165,26 @@ func (app *application) giveOutBookHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 	var id int
-	id, err = datalayer.GiveOutBook(isbn, account.Id)
+	id, err = datalayer.GiveOutBook(isbn, account.UserId)
 	if err != nil {
 		app.handleError(err, w)
 		return
 	}
 	renderJSON(w, id)
 }
+
+type ReturnBackDto struct {
+	BookItemId int `json:"bookItemId"`
+}
+
 func (app *application) returnBookHandler(w http.ResponseWriter, r *http.Request) {
-	bookItem := new(ItemDto)
+	bookItem := new(ReturnBackDto)
 	err := json.NewDecoder(r.Body).Decode(&bookItem)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	err = datalayer.ReturnBook(bookItem.Id)
+	err = datalayer.ReturnBook(bookItem.BookItemId)
 	if err != nil {
 		app.handleError(err, w)
 		return
